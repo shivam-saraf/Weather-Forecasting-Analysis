@@ -1,0 +1,87 @@
+
+use weather;
+
+
+select * from weather_df_cleaned;
+
+select `Minimum pressure` from weather_df_cleaned;
+
+-- 1. Give the count of the minimum number of days for the time when temperature reduced
+
+  WITH temp_reduced AS (
+  SELECT
+    Date,
+    temperature,
+    LAG(temperature) OVER (ORDER BY date) AS prev_temperature
+  FROM weather_df_cleaned
+)
+SELECT
+  Date,
+  temperature,
+  prev_temperature
+ 
+FROM temp_reduced
+WHERE temperature < prev_temperature
+
+;
+
+-- 2. Find the temperature as Cold / hot by using the case and avg of values of the given data set
+select Date,temperature,(case when temperature<(select avg(Temperature) from weather_df_cleaned) then 'cold' else 'hot' end)
+as 'hot/cold'
+from weather_df_cleaned;
+
+
+
+
+
+
+-- 3. Can you check for all 4 consecutive days when the temperature was below 30 Fahrenheit
+
+
+
+with abc as (select  Date as date1,temperature as day1_temp,lead(temperature) over(order by Date) as day2_temp,
+lead(temperature,2) over(order by Date) as day3_temp,lead(temperature,3) over(order by Date) as day4_temp
+,lead(date) over(order by Date) as date2
+ ,lead(date,2) over(order by Date) as date3 ,lead(date,3) over(order by Date) as date4
+from weather_df_cleaned group by Date)
+
+select  date1,date2,date3,date4   from abc 
+where 
+day1_temp<30 and day2_temp<30  and day3_temp<30 and day4_temp<30;
+
+
+
+-- 4. Can you find the average of average humidity from the dataset 
+-- ( NOTE: should contain the following clauses: group by, order by, date )
+
+select date,avg(`Average humidity (%`) from weather_df_cleaned 
+group by date
+order by date;
+
+
+
+
+
+-- 5. Use the GROUP BY clause on the Date column and make a query to fetch details for average windspeed 
+-- ( which is now windspeed done in task 3 )
+
+select date,avg(`Average windspeed (mph`) from weather_df_cleaned 
+group by date;
+
+
+
+
+-- 6. If the maximum gust speed increases from 55mph, fetch the details for the next 4 days
+
+select Date,`Maximum gust speed (mph`,lead(`Maximum gust speed (mph`) over(order by date),lead(`Maximum gust speed (mph`,2) over(order by date),
+lead(`Maximum gust speed (mph`,3) over(order by date),lead(`Maximum gust speed (mph`,4) over(order by date)
+from weather_df_cleaned where `Maximum gust speed (mph`>=55
+;
+
+
+-- 7. Find the number of days when the temperature went below 0 degrees Celsius 
+
+select count(date) from   weather_df_cleaned where `Minimum temperature (Â°F`<32 ;
+
+
+
